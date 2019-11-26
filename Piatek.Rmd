@@ -1,0 +1,186 @@
+---
+title: "Is Krzysztof Piatek a bluff?"
+author: "Andrea Bruzzone"
+output: pdf_document
+---
+
+It is the 8th of June 2018 when Genoa announces to have bought a polish guy called Krzysztof Piatek from Cracovia. As a Genoa fan, my reaction was the same as almost everyone: WHO?
+
+However, after a few games when people are still trying to understand how to pronounce his surname, it starts to be clear that Krzysztof is good in doing something: goals. It doesn't take long for the usual rumours of big clubs interested to buy him. At the end, the winning team is Milan; in the winter transfer window, Piatek becomes the new forward of Ac Milan. With the new team, as well as with the Polish national team, Piatek keeps scoring. He will finish the 2018/19 season with 22 goals, not bad for the first year in the Italian league. The new season starts and with it, the problems. After 13 games, Piatek has scored only 3 goals, 2 of which from penalty. As the expectatives were high, people starts to wonder: is Krzysztof Piatek a bluff?
+
+Let's try to analyse his performances compared to the ones of the previous year, both in his period at Genoa and at Milan. We start by having a look at his shotmaps to see if, maybe, he started to have less shots or from a low probability of goal area of the field. 
+
+
+```{r, echo=F, warning=FALSE, error=FALSE, message=FALSE}
+require(ggsoccer)
+require(ggplot2)
+require(ggthemes)
+require(patchwork)
+
+source("get_data_functions.R")
+
+theme_set(theme_light(base_size = 15))
+
+Piatek_single_game <- get_data(player_id = 7090, node = 5)
+Piatek_single_game <- Piatek_single_game %>% 
+  mutate(xg90  = pmap_dbl(list(time, xG),
+                          function(x, y){
+                            res <- (sum(as.double(y)) / sum(as.integer(x)))*90
+                            return(res)
+                          }),
+         npxg90 =  pmap_dbl(list(time, npxG),
+                            function(x, y){
+                              res <- (sum(as.double(y)) / sum(as.integer(x)))*90
+                              return(res)
+                            }))
+Piatek_single_game_Genoa <- Piatek_single_game %>% filter(date < "2019-01-26") 
+game_id_Genoa_single <- Piatek_single_game_Genoa %>% 
+  group_by(date) %>% 
+  summarise(count = n()) %>% 
+  mutate(game = row_number()) %>% 
+  select(-count)
+Piatek_single_game_Genoa <- left_join(Piatek_single_game_Genoa, game_id_Genoa_single, by = "date")
+
+Piatek_single_game_Milan <- Piatek_single_game %>% filter(date >= "2019-01-26") 
+game_id_Milan_single <- Piatek_single_game_Milan %>% 
+  group_by(season, date) %>% 
+  summarise(count = n()) %>% 
+  mutate(game = row_number()) %>% 
+  select(-count)
+Piatek_single_game_Milan <- left_join(Piatek_single_game_Milan, game_id_Milan_single, by = "date")
+
+p1 <- ggplot(Piatek_single_game_Milan) + 
+  geom_line(data = Piatek_single_game_Milan %>% filter(season.x == 2018) %>% arrange(game), 
+            aes(x = game, y = cumsum(xg90), colour = "Milan 18/19"), size = 2) + 
+  geom_line(data = Piatek_single_game_Milan %>% filter(season.x == 2019) %>% arrange(game), 
+            aes(x = game, y = cumsum(xg90), colour = "Milan 19/20"), size = 2) +
+  geom_line(data = Piatek_single_game_Genoa %>% arrange(game), 
+            aes(x = game, y = cumsum(xg90), colour = "Genoa 18/19"), size = 2) +
+  scale_x_continuous(breaks = seq(1:19)) +
+  scale_y_continuous(breaks = 0:11) +
+  scale_colour_manual(name="", values=c(`Milan 18/19` = "red", `Milan 19/20` = "blue", `Genoa 18/19` = "black")) +
+  labs(title = "Krzysztof Piatek comparison",
+       subtitle = "Games played with Genoa and with Milan",
+       y = "Cumulative xG per 90 minutes",
+       x = "Game played"#,
+       #caption = "Visualisation by: Andrea Bruzzone"
+       ) +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        legend.position = "bottom") 
+
+p2 <- ggplot(Piatek_single_game_Milan) + 
+  geom_line(data = Piatek_single_game_Milan %>% filter(season.x == 2018) %>% arrange(game), 
+            aes(x = game, y = cumsum(npxg90), colour = "Milan 18/19"), size = 2) + 
+  geom_line(data = Piatek_single_game_Milan %>% filter(season.x == 2019) %>% arrange(game), 
+            aes(x = game, y = cumsum(npxg90), colour = "Milan 19/20"), size = 2)  +
+  geom_line(data = Piatek_single_game_Genoa %>% arrange(game), 
+            aes(x = game, y = cumsum(npxg90), colour = "Genoa 18/19"), size = 2) +
+  scale_x_continuous(breaks = seq(1:19)) +
+  scale_y_continuous(breaks = 0:11) +
+  scale_colour_manual(name="", values=c(`Milan 18/19` = "red", `Milan 19/20` = "blue", `Genoa 18/19` = "black")) +
+  labs(y = "Cumulative non penalty xG per 90 minutes",
+       x = "Game played",
+       caption = "Visualisation by: Andrea Bruzzone") +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        legend.position = "bottom") 
+Piatek <- get_data(player_id = 7090, node = 4)
+Piatek <- Piatek %>% 
+  mutate(X = as.double(X),
+         Y = as.double(Y),
+         xG = as.double(xG),
+         date = as.Date(date),
+         season = as.factor(season))
+
+Piatek_Milan <- Piatek %>% filter(date >= "2019-01-26") 
+Piatek_Milan18 <- Piatek_Milan %>% filter(season == 2018) %>% arrange(date) %>% mutate(team = "Milan18")
+Piatek_Milan19 <- Piatek_Milan %>% filter(season == 2019) %>% arrange(date) %>% mutate(team = "Milan19")
+
+games19 <- length(unique(Piatek_Milan19$match_id))
+
+Piatek_Milan18 <- Piatek_Milan18 %>% filter(match_id %in% unique(Piatek_Milan18$match_id)[1:games19])
+
+Piatek18 <- Piatek %>% 
+  filter(season == 2018) %>% 
+  arrange(date) %>% 
+  filter(match_id %in% unique(Piatek$match_id)[1:games19]) %>% 
+  mutate(team = "Genoa")
+
+Piatek_Milan19_for_plot <- Piatek_Milan %>% filter(season == 2019) %>% arrange(date) %>% mutate(team = "Milan")
+combined_Piatek <- bind_rows(Piatek18, Piatek_Milan19_for_plot) 
+
+p3 <- ggplot(combined_Piatek) +
+  annotate_pitch(colour = "white",
+                 fill   = "chartreuse4",
+                 limits = FALSE) +
+  geom_point(aes(X*100, y =  100- (Y*100), fill = team, size = xG),
+              shape = 21, colour = 'red') +
+  theme_pitch() +
+  coord_flip(xlim = c(49, 101), ylim = c(-1, 101)) +
+  scale_fill_manual(name = "", values = c("blue", "black")) + 
+  scale_size_continuous(name = "", breaks  = NULL) +
+  guides(fill = guide_legend(title = "", override.aes = list(size = 6))) +
+  theme(plot.background = element_rect(fill = "chartreuse4"),
+        plot.title = element_text(colour = "white", size = 18),
+        legend.position = "bottom",
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(colour = "white", size = 10),
+        plot.subtitle = element_text(colour = "white", size = 12),
+        plot.caption = element_text(colour = "white", size = 12)
+        ) + 
+  labs(title = "Krzysztof Piatek shotmap",
+       subtitle = "First 13 matches with Genoa (season 18/19) vs current season with Milan (13 matches)", 
+       caption = "Visualisation by: Andrea Bruzzone"
+       ) 
+  
+combined_Piatek_Milan <- bind_rows(Piatek_Milan18, Piatek_Milan19)  
+
+p4 <- ggplot(combined_Piatek_Milan) +
+  annotate_pitch(colour = "white",
+                 fill   = "chartreuse4",
+                 limits = FALSE) +
+  geom_point(aes(X*100, y =  100- (Y*100), fill = team, size = xG),
+             shape = 21, colour = 'red') +
+  theme_pitch() +
+  coord_flip(xlim = c(49, 101), ylim = c(-1, 101)) +
+  scale_fill_manual(name = "", values = c("white", "black")) + 
+  scale_size_continuous(name = "", breaks  = NULL) +
+  guides(fill = guide_legend(title = "", override.aes = list(size = 6))) +
+  theme(plot.background = element_rect(fill = "chartreuse4"),
+        plot.title = element_text(colour = "white", size = 18),
+        legend.position = "bottom",
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(colour = "white", size = 10),
+        plot.subtitle = element_text(colour = "white", size = 12),
+        plot.caption = element_text(colour = "white", size = 12)
+  ) + 
+  labs(title = "Krzysztof Piatek shotmap",
+       subtitle = "First 13 matches with Milan (season 18/19) vs current season (13 matches)", 
+       caption = "Visualisation by: Andrea Bruzzone")
+
+```
+
+
+```{r, echo=F, fig.height = 6, fig.width = 10, fig.align = "center"}
+p3 
+```
+
+```{r, echo=F, fig.height = 6, fig.width = 10, fig.align = "center"}
+p4
+```
+
+The plots don't show much differences, he seems to have had more shots in the first 13 games at Genoa compare to both his periods at Milan but, with the Rossoneri, Piatek had more shots with higher expected goal value. However, it can be seen that during the 18/19 season at Milan, his shots were more concentrated in the center part of the box with few from outside, while in this season his shots are more spreaded. Overall, the shotmaps don't indicate a big difference in his approach to the game, he is still a "into the box" forward. 
+
+To have a better look at his performances, the following plots show the cumulative expected goal per 90 minutes and the cumulative non penalty expected goals per 90 minutes during the 3 periods: with Genoa and Milan during season 18/19 and with Milan during this season.
+
+
+```{r, echo=F, fig.height = 6, fig.width = 10, fig.align = "center"}
+p1 + p2
+```
+
+The plots shows that even if Piatek has scored way less goals after 13 games than both his period at Genoa and at Milan last season, he was expected to actually have more than both of them. Excluding penalties, the situation doesn't change much, he would still be expected to have more goals then what he had with Genoa and basically the same as the ones had with Milan.
+
+From this short analysis, Piatek does not seem to be a bluff. He has been a bit unlucky so far and the poor performances of the team so far together with the chaos around the entire club, didn't help for sure. Will he get back to be the lethal scorer of last season?
