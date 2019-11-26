@@ -3,7 +3,12 @@ title: "Is Krzysztof Piatek a bluff?"
 author: "Andrea Bruzzone"
 output: html_document
 ---
-
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+ 
 It is the 8th of June 2018 when Genoa announces to have bought a polish guy called Krzysztof Piatek from Cracovia. As a Genoa fan, my reaction was the same as almost everyone: WHO?
 
 However, after a few games when people are still trying to understand how to pronounce his surname, it starts to be clear that Krzysztof is good in doing something: goals. It doesn't take long for the usual rumours of big clubs interested to buy him. At the end, the winning team is Milan; in the winter transfer window, Piatek becomes the new forward of Ac Milan. With the new team, as well as with the Polish national team, Piatek keeps scoring. He will finish the 2018/19 season with 22 goals, not bad for the first year in the Italian league. The new season starts and with it, the problems. After 13 games, Piatek has scored only 3 goals, 2 of which from penalty. As the expectatives were high, people starts to wonder: is Krzysztof Piatek a bluff?
