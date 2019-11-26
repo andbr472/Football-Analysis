@@ -1,7 +1,7 @@
 ---
 title: "Is Krzysztof Piatek a bluff?"
 author: "Andrea Bruzzone"
-output: pdf_document
+output: html_document
 ---
 
 It is the 8th of June 2018 when Genoa announces to have bought a polish guy called Krzysztof Piatek from Cracovia. As a Genoa fan, my reaction was the same as almost everyone: WHO?
