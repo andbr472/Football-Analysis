@@ -1,8 +1,11 @@
 library(grid)
+library(ggplot2)
+library(ggthemes)
+library(ggrepel)
 
 source("get_data_functions.R")
 
-players_list_2018 <- get_data(league = "Serie_A", year = 2018, node = 4)
+players_list_2018 <- get_data(league = "Bundesliga", year = 2018, node = 4)
 players_id <- players_list_2018 %>% 
   mutate(shots = as.numeric(shots),
          goals = as.numeric(goals)) %>% 
@@ -83,10 +86,19 @@ complete_df$player_name <- gsub("Kevin Lasagna", "Lasagna", complete_df$player_n
 complete_df$player_name <- gsub("Mariusz Stepinski", "Stepinski", complete_df$player_name)
 complete_df$player_name <- gsub("Lautaro Martínez", "L. Martínez", complete_df$player_name)
 
+ligue1 <- complete_df
+ligue1 <- ligue1 %>% mutate(ligue = "Ligue1")
+bundes <- complete_df
+bundes <- bundes %>% mutate(ligue = "Bundesliga")
+epl <- complete_df
+epl <- epl %>% mutate(ligue = "EPL")
+liga <- complete_df
+liga <- liga %>% mutate(ligue = "La Liga")
+seriaA <- complete_df
+seriaA <- seriaA %>% mutate(ligue = "Seria A")
+all_ligue <- bind_rows(ligue1, bundes, epl, liga, seriaA)
 
-
-
-p <- ggplot(complete_df, aes(x = goal, y = missed, label = player_name)) + 
+p <- ggplot(epl, aes(x = goal, y = missed, label = player_name)) + 
   geom_point(size = 2) +
   geom_label_repel(label.padding = 0.15, size = 5) +
   expand_limits(x = 0, y = 0) +
